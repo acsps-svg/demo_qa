@@ -1,58 +1,40 @@
-import pytest
 import re
 from playwright.sync_api import Page, expect
 
+def test_criar_usuario_e_verificar_login(page: Page):
+    # O pytest-playwright já abre o navegador e usa a base-url do .yml
+    page.goto("/")
 
-@pytest.fixture(scope="session")
-def browser_context_args(browser_context_args, playwright):
-    return {"viewport": {"width":880,"height":720}}
+    # 1. Verifica se está na tela inicial
+    expect(page.locator("h2")).to_contain_text("Quem vai beber água?")
 
+    # 2. Cria um novo usuário
+    # Fill: preenche o input
+    page.get_by_placeholder("Nome da nova pessoa").fill("Python Tester")
+    
+    # Click: clica no botão "Criar"
+    page.get_by_role("button", name="Criar").click()
 
-def test_example(page: Page) -> None:
-    page.goto("http://bootswatch.com/default/")
-    expect(page.get_by_role("heading",name="Default")).to_be_visible()
-    page.goto("http://bootswatch.com/zephyr/")
+    # 3. Validações da tela de Tracker
+    # Verifica se o nome aparece nas boas-vindas
+    expect(page.locator("#welcomeName")).to_contain_text("Olá, Python Tester")
+    
+    # Verifica se o contador começa zerado
+    expect(page.locator("#currentDisplay")).to_have_text("0")
 
-    page.get_by_role("group", name="Ranges").click()
-    page.get_by_role("button", name="Submit").click()
+def test_fluxo_beber_agua(page: Page):
+    page.goto("/")
 
-    expect(page.get_by_role("heading",name="Zephyr")).to_be_visible()
+    # Setup: Cria usuário rápido para o teste
+    page.get_by_placeholder("Nome da nova pessoa").fill("DevOps User")
+    page.get_by_role("button", name="Criar").click()
 
-    # page.get_by_placeholder("Enter email").click()
-    # page.get_by_placeholder("Enter email").dblclick()
-    # page.get_by_placeholder("Enter email").press("ControlOrMeta+x")
-    # page.get_by_placeholder("Enter email").fill("Teste123")
-    # page.get_by_placeholder("Enter email").press("Enter")
-    # page.get_by_role("button").filter(has_text=re.compile(r"^$")).nth(5).dblclick()
-    # page.get_by_role("button", name=" Copy Code").click()
+    # Ação: Beber água
+    # Localiza o botão que contém o texto "Beber Copo"
+    page.locator(".btn-drink").click()
 
-def test_new(page: Page) -> None:
-    page.goto("https://andrewcesarp.github.io/")
-    page.get_by_role("textbox", name="Nome da nova pessoa").click()
-    page.get_by_role("textbox", name="Nome da nova pessoa").fill("Drew")
-    page.get_by_role("textbox", name="Nome da nova pessoa").press("Enter")
-    page.get_by_role("button", name="← Trocar Pessoa").click()
-    page.get_by_text("Drew", exact=True).click()
-    page.locator("#goalInput").click()
-    page.locator("#goalInput").dblclick()
-    page.locator("#goalInput").fill("-4000")
-    page.locator("#goalInput").press("Enter")
-    page.locator("#cupInput").dblclick()
-    page.locator("#cupInput").fill("2500")
-    page.get_by_role("button", name="Beber Copo").click()
-    page.once("dialog", lambda dialog: dialog.dismiss())
-    page.get_by_role("button", name="Zerar meu dia").click()
-    page.locator("#goalInput").click()
-    page.locator("#goalInput").click()
-    page.locator("#goalInput").press("ArrowLeft")
-    page.locator("#goalInput").press("ArrowLeft")
-    page.locator("#goalInput").press("ArrowLeft")
-    page.locator("#goalInput").press("ArrowLeft")
-    page.locator("#goalInput").fill("4000")
-    page.locator("#goalInput").press("Enter")
-    page.locator("#cupInput").highlight().click()
-    page.locator("#cupInput").highlight().fill("3150")
-    page.locator("#cupInput").press("Enter")
-    page.get_by_role("button", name="Beber Copo").click()
-
-    expect(page.get_by_text("Beber Copo")).to_be_visible()
+    # Validação: O padrão do HTML é copo de 250ml
+    expect(page.locator("#currentDisplay")).to_have_text("250")
+    
+    # Validação Visual (Opcional): Verifica se a cor mudou ou se o gráfico andou
+    # Aqui verificamos apenas se o número atualizou corretamente
