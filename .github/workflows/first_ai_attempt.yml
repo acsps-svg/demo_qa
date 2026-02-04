@@ -29,7 +29,8 @@ jobs:
       - name: Iniciar Servidor Local & Testar
         run: |
           # Sobe o servidor nativo do Python na porta 8000 em background (&)
-          python3 -m http.server 8000 &
+          # --bind 127.0.0.1 força o uso do IPv4
+          python3 -m http.server 8000 --bind 127.0.0.1 &
 
           # DevOps Check: Loop simples para garantir que a porta 8000 respondeu
           echo "Aguardando servidor subir..."

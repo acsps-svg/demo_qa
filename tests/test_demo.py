@@ -3,7 +3,7 @@ from playwright.sync_api import Page, expect
 
 
 def test_example(page: Page) -> None:
-    page.goto("http://localhost:8000/")
+    page.goto("http://127.0.0.1:8000/")
     page.get_by_role("textbox", name="Nome da nova pessoa").click()
     page.get_by_role("textbox", name="Nome da nova pessoa").fill("Teste 123")
     page.get_by_role("button", name="Criar").click()
