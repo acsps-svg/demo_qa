@@ -18,7 +18,7 @@ jobs:
 
       - name: Verificar Instalação de Dependências
         run: |
-          pip install -r requirements.txt
+          pip install -U -r requirements.txt
           python -c "import flask; print('Flask instalado com sucesso')"
 
   # JOB 2: Testes E2E (Depende do Job 1)
@@ -67,7 +67,7 @@ jobs:
       - name: Executar Testes Playwright
         run: |
           # Rodamos o Pytest apontando para a porta do Flask
-          pytest --base-url http://127.0.0.1:5000 --tracing=retain-on-failure
+          pytest --base-url http://127.0.0.1:5000 --tracing=retain-on-failure --screenshot=only-on-failure
 
       - name: Upload Artefatos (Se falhar)
         if: failure()
