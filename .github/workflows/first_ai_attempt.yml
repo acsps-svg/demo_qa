@@ -1,0 +1,77 @@
+name: Flask E2E Pipeline
+on: [push, pull_request]
+
+jobs:
+  # JOB 1: Verificação de Integridade (Build)
+  # Este job garante que o código está instalável antes de gastar tempo tentando testar
+  sanity-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Verificar Instalação de Dependências
+        run: |
+          pip install -r requirements.txt
+          python -c "import flask; print('Flask instalado com sucesso')"
+
+  # JOB 2: Testes E2E (Depende do Job 1)
+  testes-e2e:
+    needs: sanity-check  # <--- AQUI está a dependência de jobs que você pediu
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    services:
+      # Dica Pro: Se seu banco de dados fosse separado, definiríamos ele aqui.
+      # Como o Flask é a aplicação principal, rodamos ele nos steps abaixo.
+      pass: 
+        image: alpine # Placeholder apenas para ilustrar estrutura de serviços se necessário
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Instalar Dependências e Browsers
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium --with-deps
+
+      # ETAPA CRÍTICA: Subir Flask e Aguardar (Healthcheck)
+      - name: Start Flask & Wait
+        run: |
+          # 1. Inicia o Flask em background (&) e salva o PID para matar depois se precisar
+          # O parâmetro unbuffered (-u) ajuda a ver logs em tempo real
+          python -u app.py &
+          
+          echo "Flask iniciado. Aguardando porta 5000..."
+
+          # 2. Loop de verificação (Polling)
+          # Tenta conectar na porta 5000 a cada segundo, por no máximo 15 segundos
+          timeout 15 bash -c 'until curl -s http://127.0.0.1:5000 > /dev/null; do sleep 1; done'
+          
+          echo "Servidor Flask está UP e respondendo!"
+
+      # A execução deste passo DEPENDE do passo anterior ter sucesso
+      - name: Executar Testes Playwright
+        run: |
+          # Rodamos o Pytest apontando para a porta do Flask
+          pytest --base-url http://127.0.0.1:5000 --tracing=retain-on-failure
+
+      - name: Upload Artefatos (Se falhar)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flask-playwright-report
+          path: test-results/

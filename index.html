@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hidratação Multi-Usuário</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h1, h2 { color: var(--primary-color); margin-bottom: 1rem; }
+
+        /* Utilitários */
+        .hidden { display: none !important; }
+        
+        /* Estilos da Tela de Login */
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .user-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .user-card:hover {
+            transform: translateX(5px);
+            border-color: var(--primary-color);
+        }
+
+        .user-name { font-weight: bold; }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0 5px;
+        }
+        .btn-delete:hover { color: var(--danger-color); }
+
+        .new-user-form {
+            display: flex;
+            gap: 5px;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .btn-add {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        /* Estilos do Rastreador (Copiados e melhorados) */
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn-back {
+            background: #eee;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .inputs-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 48%;
+        }
+
+        label { font-size: 0.75rem; color: #666; font-weight: bold; margin-bottom: 5px;}
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .progress-circle {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary-color) 0deg, #e0e0e0 0deg);
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.5s ease;
+        }
+
+        .progress-inner {
+            width: 140px;
+            height: 140px;
+            background-color: var(--card-bg);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .current-amount { font-size: 2rem; font-weight: bold; color: var(--primary-color); }
+        .goal-text { font-size: 0.85rem; color: #999; }
+
+        .btn-drink {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-drink:hover { background-color: #2980b9; }
+        .btn-drink:active { transform: scale(0.98); }
+
+        .btn-reset {
+            background: none;
+            border: none;
+            color: #999;
+            text-decoration: underline;
+            margin-top: 15px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="loginScreen">
+        <h2>Quem vai beber água?</h2>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Selecione seu perfil ou crie um novo.</p>
+        
+        <div class="user-list" id="userList">
+            </div>
+
+        <div class="new-user-form">
+            <input type="text" id="newUserName" placeholder="Nome da nova pessoa" onkeypress="handleEnter(event)">
+            <button class="btn-add" onclick="createNewUser()">Criar</button>
+        </div>
+    </div>
+
+    <div class="container hidden" id="trackerScreen">
+        <div class="header-nav">
+            <button class="btn-back" onclick="logout()">← Trocar Pessoa</button>
+            <span style="font-weight: bold; color: #555;" id="welcomeName">Olá, Nome</span>
+        </div>
+
+        <div class="inputs-area">
+            <div class="input-group">
+                <label>Meta Diária (ml)</label>
+                <input type="number" id="goalInput" onchange="saveCurrentUserData()">
+            </div>
+            <div class="input-group">
+                <label>Tamanho Copo (ml)</label>
+                <input type="number" id="cupInput" onchange="saveCurrentUserData()">
+            </div>
+        </div>
+
+        <div class="progress-circle" id="progressCircle">
+            <div class="progress-inner">
+                <span class="current-amount" id="currentDisplay">0</span>
+                <span class="goal-text">de <span id="goalDisplay">2500</span> ml</span>
+            </div>
+        </div>
+
+        <button class="btn-drink" onclick="addWater()">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Beber Copo
+        </button>
+
+        <button class="btn-reset" onclick="resetDay()">Zerar meu dia</button>
+    </div>
+
+    <script>
+        // --- GERENCIAMENTO DE DADOS ---
+        const STORAGE_KEY = 'waterTrackerUsers_v1';
+        let usersData = {}; // Objeto que guarda todos os usuários
+        let currentUserKey = null; // Usuário atual logado
+
+        // Inicialização
+        function initApp() {
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            if (storedData) {
+                usersData = JSON.parse(storedData);
+            }
+            renderUserList();
+        }
+
+        // Salva tudo no LocalStorage
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(usersData));
+        }
+
+        // --- TELA DE LOGIN ---
+        
+        function renderUserList() {
+            const listElement = document.getElementById('userList');
+            listElement.innerHTML = '';
+            
+            const names = Object.keys(usersData);
+
+            if (names.length === 0) {
+                listElement.innerHTML = '<div style="color:#999; font-style:italic;">Nenhum perfil criado ainda.</div>';
+                return;
+            }
+
+            names.forEach(name => {
+                const div = document.createElement('div');
+                div.className = 'user-card';
+                div.innerHTML = `
+                    <span class="user-name" onclick="login('${name}')">${name}</span>
+                    <button class="btn-delete" onclick="deleteUser('${name}')" title="Excluir perfil">&times;</button>
+                `;
+                // O clique no nome faz login, o clique no X deleta
+                div.querySelector('.user-name').style.flexGrow = '1';
+                listElement.appendChild(div);
+            });
+        }
+
+        function createNewUser() {
+            const input = document.getElementById('newUserName');
+            const name = input.value.trim();
+
+            if (!name) return alert("Digite um nome!");
+            if (usersData[name]) return alert("Esse nome já existe!");
+
+            // Cria o perfil padrão
+            usersData[name] = {
+                total: 0,
+                goal: 2500,
+                cupSize: 250,
+                lastActive: new Date().toISOString()
+            };
+
+            saveToStorage();
+            input.value = '';
+            renderUserList();
+            login(name); // Já entra direto
+        }
+
+        function deleteUser(name) {
+            if (confirm(`Tem certeza que deseja excluir o perfil de ${name}?`)) {
+                delete usersData[name];
+                saveToStorage();
+                renderUserList();
+            }
+        }
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') createNewUser();
+        }
+
+        // --- LÓGICA DO RASTREADOR (Logado) ---
+
+        function login(name) {
+            currentUserKey = name;
+            
+            // Alterna telas
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('trackerScreen').classList.remove('hidden');
+            
+            // Carrega dados do usuário nos inputs
+            const user = usersData[name];
+            document.getElementById('welcomeName').textContent = `Olá, ${name}`;
+            document.getElementById('goalInput').value = user.goal;
+            document.getElementById('cupInput').value = user.cupSize;
+            
+            updateInterface();
+        }
+
+        function logout() {
+            currentUserKey = null;
+            document.getElementById('trackerScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            renderUserList(); // Atualiza caso algo tenha mudado
+        }
+
+        function saveCurrentUserData() {
+            if (!currentUserKey) return;
+            
+            const goal = parseInt(document.getElementById('goalInput').value);
+            const cup = parseInt(document.getElementById('cupInput').value);
+            
+            usersData[currentUserKey].goal = goal;
+            usersData[currentUserKey].cupSize = cup;
+            
+            saveToStorage();
+            updateInterface();
+        }
+
+        function addWater() {
+            if (!currentUserKey) return;
+            
+            const cupSize = parseInt(document.getElementById('cupInput').value);
+            usersData[currentUserKey].total += cupSize;
+            
+            saveToStorage(); // Salva imediatamente
+            updateInterface();
+            
+            // Feedback visual de sucesso
+            if (usersData[currentUserKey].total >= usersData[currentUserKey].goal) {
+                 document.documentElement.style.setProperty('--primary-color', '#2ecc71');
+            }
+        }
+
+        function resetDay() {
+            if (confirm("Deseja zerar a contagem de hoje?")) {
+                usersData[currentUserKey].total = 0;
+                saveToStorage();
+                document.documentElement.style.setProperty('--primary-color', '#3498db');
+                updateInterface();
+            }
+        }
+
+        function updateInterface() {
+            const user = usersData[currentUserKey];
+            
+            // Atualiza textos
+            document.getElementById('currentDisplay').textContent = user.total;
+            document.getElementById('goalDisplay').textContent = user.goal;
+
+            // Gráfico
+            let percentage = (user.total / user.goal) * 100;
+            const visualPercentage = percentage > 100 ? 100 : percentage;
+            const degrees = (visualPercentage / 100) * 360;
+            
+            const circle = document.getElementById('progressCircle');
+            
+            // Define a cor baseada no progresso (azul ou verde se completou)
+            const color = percentage >= 100 ? '#2ecc71' : '#3498db';
+            document.documentElement.style.setProperty('--primary-color', color);
+
+            circle.style.background = `conic-gradient(${color} ${degrees}deg, #e0e0e0 ${degrees}deg)`;
+        }
+
+        // Inicia
+        initApp();
+
+    </script>
+</body>
+</html>
