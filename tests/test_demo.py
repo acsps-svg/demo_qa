@@ -8,4 +8,4 @@ def test_example(page: Page) -> None:
     page.get_by_role("textbox", name="Nome da nova pessoa").fill("Andrew")
     page.get_by_role("button", name="Criar").click()
 
-    expect(page.get_by_role("button", name="Beber Copo")).to_be_visible()
+    expect(page.get_by_role("button", name="Beber Copo1")).to_be_visible()
