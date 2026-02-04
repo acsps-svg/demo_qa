@@ -1,53 +1,29 @@
-name: Testes E2E - Python Playwright
-on: [push, pull_request]
-
+name: Playwright Tests
+on:
+  push:
+    branches: [ demo_qa ]
+  pull_request:
+    branches: [ demo_qa ]
 jobs:
-  python-e2e:
-    name: Validar Hidratação (Python)
+  test:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      # 1. Configura Python
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip' # Cache para acelerar downloads futuros
-
-      # 2. Instala dependências (Pytest + Playwright)
-      - name: Instalar Dependências
-        run: |
-          pip install -r requirements.txt
-          # Instala os navegadores necessários do Playwright
-          playwright install chromium --with-deps
-
-      # 3. Sobe o servidor e espera ficar pronto
-      - name: Iniciar Servidor Local & Testar
-        run: |
-          # Sobe o servidor nativo do Python na porta 8000 em background (&)
-          # --bind 127.0.0.1 força o uso do IPv4
-          python3 -m http.server 8000 --bind 127.0.0.1 &
-
-          # DevOps Check: Loop simples para garantir que a porta 8000 respondeu
-          echo "Aguardando servidor subir..."
-          timeout 10 bash -c 'while ! echo > /dev/tcp/localhost/8000; do sleep 1; done'
-          echo "Servidor online!"
-
-      # 4. Executa os testes apontando para o localhost
-      - name: Rodar Pytest
-        # --base-url define onde o teste vai bater
-        # --tracing=retain-on-failure salva o "vídeo/trace" se falhar
-        run: pytest --tracing=retain-on-failure
-
-      # 5. Salva evidências (Trace Viewer) se houver falha
-      - name: Upload Artefatos de Falha
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-playwright-traces
-          path: test-results/
-          retention-days: 5
+    - uses: actions/checkout@v5
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Ensure browsers are installed
+      run: python -m playwright install --with-deps
+    - name: Run your tests
+      run: pytest --tracing=retain-on-failure
+    - uses: actions/upload-artifact@v5
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-traces
+        path: test-results/
