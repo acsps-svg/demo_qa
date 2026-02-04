@@ -6,7 +6,7 @@ def test_criar_usuario_e_verificar_login(page: Page):
     page.goto("/")
 
     # 1. Verifica se está na tela inicial
-    expect(page.locator("h2")).to_contain_text("Quem vai beber água?")
+    expect(page.get_by_text("Quem vai beber água?")).to_contain_text("Quem vai beber água?")
 
     # 2. Cria um novo usuário
     # Fill: preenche o input
