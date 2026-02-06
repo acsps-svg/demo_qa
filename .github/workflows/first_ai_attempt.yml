@@ -1,9 +1,14 @@
 name: Flask E2E Pipeline
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - new_one
+  pull_request:
+    branches:
+      - main
 
 jobs:
   # JOB 1: Verificação de Integridade (Build)
-  # Este job garante que o código está instalável antes de gastar tempo tentando testar
   sanity-check:
     runs-on: ubuntu-latest
     steps:
@@ -67,7 +72,7 @@ jobs:
       - name: Executar Testes Playwright
         run: |
           # Rodamos o Pytest apontando para a porta do Flask
-          pytest --base-url http://127.0.0.1:5000 --tracing=retain-on-failure --screenshot=only-on-failure
+          pytest --tracing=retain-on-failure --screenshot=only-on-failure
 
       - name: Upload Artefatos (Se falhar)
         if: failure()
